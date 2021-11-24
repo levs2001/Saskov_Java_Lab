@@ -15,7 +15,7 @@ public class Writer implements IWriter {
 
     @Override
     public RC setOutputStream(OutputStream outputStream) {
-        if(outputStream == null) {
+        if (outputStream == null) {
             return RC.RC_WRITER_FAILED_TO_WRITE;
         }
 
@@ -42,7 +42,7 @@ public class Writer implements IWriter {
     @Override
     public RC consume(byte[] bytes) {
         try {
-            if(bytes == null) {
+            if (bytes == null) {
                 outputStream.flush();
             } else {
                 outputStream.write(bytes);

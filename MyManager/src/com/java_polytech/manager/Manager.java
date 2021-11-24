@@ -98,18 +98,18 @@ public class Manager {
     }
 
     private RC setParticipants() {
-        reader = (IReader)getInstance(config.getReaderClassName(), IReader.class);
-        if(reader == null) {
+        reader = (IReader) getInstance(config.getReaderClassName(), IReader.class);
+        if (reader == null) {
             return RC.RC_MANAGER_INVALID_READER_CLASS;
         }
 
-        writer = (IWriter)getInstance(config.getWriterClassName(), IWriter.class);
-        if(writer == null) {
+        writer = (IWriter) getInstance(config.getWriterClassName(), IWriter.class);
+        if (writer == null) {
             return RC.RC_MANAGER_INVALID_WRITER_CLASS;
         }
 
-        executor = (IExecutor)getInstance(config.getExecutorClassName(), IExecutor.class);
-        if(executor == null) {
+        executor = (IExecutor) getInstance(config.getExecutorClassName(), IExecutor.class);
+        if (executor == null) {
             return RC.RC_MANAGER_INVALID_EXECUTOR_CLASS;
         }
 

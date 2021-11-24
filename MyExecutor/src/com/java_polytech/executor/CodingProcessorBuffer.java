@@ -23,7 +23,7 @@ public class CodingProcessorBuffer {
     public RC writeBit(int bit) {
         RC rc = RC.RC_SUCCESS;
         if (bufferByteFreeBits == 0) {
-            // To avoid Out of bounds
+            // bufferByteFreeBits to default need to avoid recursion in case of last byte during writing bit
             bufferByteFreeBits = BITS_IN_BYTE_COUNT;
             rc = writeByte(bufferByte);
             if (!rc.isSuccess()) {
@@ -38,7 +38,6 @@ public class CodingProcessorBuffer {
     }
 
     public RC writeByte(int sym) {
-        //TODO: Вот это место потенциально может быть причиной ошибок из-за каста
         buffer[filled++] = (byte) sym;
         if (filled == buffer.length) {
             return flush();
@@ -47,12 +46,10 @@ public class CodingProcessorBuffer {
     }
 
     public RC flush() {
-        //TODO: Вот эта функция тоже может быть источником проблем, проверить, что она не записывает пустой массив, что не делает бесконечную рекурсию
         if (bufferByteFreeBits != BITS_IN_BYTE_COUNT) {
             // Case when some bits are written in bufferByte
             bufferByte <<= bufferByteFreeBits;
-            //Potential recursion and loop, but I don't use writeBit and writeByte together in one class, so it's safe
-            //bufferByteFreeBits to default need to avoid recursion in case of last byte during writing bit
+            // bufferByteFreeBits to default need to avoid recursion in case of last byte during writing bit
             bufferByteFreeBits = BITS_IN_BYTE_COUNT;
             RC rc = writeByte(bufferByte);
             if (!rc.isSuccess()) {
@@ -67,12 +64,8 @@ public class CodingProcessorBuffer {
             res = Arrays.copyOf(buffer, filled);
         }
         filled = 0;
-        if (res.length != 0) {
-            return out.apply(res);
-        } else {
-            // This case in for flush -> writeByte -> flush (It can be because of opportunity to write addition of byteBuffer from flush)
-            return RC.RC_SUCCESS;
-        }
+
+        return out.apply(res);
     }
 
 

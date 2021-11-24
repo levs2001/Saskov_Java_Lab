@@ -35,7 +35,7 @@ public class ArithmeticDecoder extends ArithmeticCodingProcessor {
             int bit = (val >> i) & FIRST_BIT_MASK;
             processNextBit(bit);
             rc = tryOutputByte();
-            if(!rc.isSuccess()) {
+            if (!rc.isSuccess()) {
                 return rc;
             }
         }

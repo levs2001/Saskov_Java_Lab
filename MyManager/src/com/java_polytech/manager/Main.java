@@ -6,7 +6,7 @@ public class Main {
     static final int ARG_NUM_FOR_FILENAME = 0;
 
     public static void main(String[] args) {
-        if(args[ARG_NUM_FOR_FILENAME] != null) {
+        if (args[ARG_NUM_FOR_FILENAME] != null) {
             Manager manager = new Manager();
             RC rc = manager.run(args[ARG_NUM_FOR_FILENAME]);
             if (!rc.isSuccess()) {
