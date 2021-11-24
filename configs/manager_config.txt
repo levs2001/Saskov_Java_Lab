@@ -1,0 +1,8 @@
+input_file=test_files/CodedTest.bin
+output_file=test_files/DecodedMe.jpg
+reader_config_file=configs/reader_config.txt
+writer_config_file=configs/writer_config.txt
+executor_config_file=configs/executor_config.txt
+reader_class=com.java_polytech.reader.Reader
+writer_class=com.java_polytech.writer.Writer
+executor_class=com.java_polytech.executor.Executor

@@ -1,0 +1,2 @@
+mode=decoding
+buffer_size=100
