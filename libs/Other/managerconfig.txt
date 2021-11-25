@@ -1,0 +1,8 @@
+INPUT_FILE = output.txt
+OUTPUT_FILE = text.txt
+READER = com.reader.Reader
+WRITER = com.writer.Writer
+EXECUTOR = com.executor.Executor
+READER_CONFIG = Reader/config.txt
+WRITER_CONFIG = Writer/config.txt
+EXECUTOR_CONFIG = Executor/config.txt
