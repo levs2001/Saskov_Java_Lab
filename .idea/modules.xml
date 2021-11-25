@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/MyExecutor/MyExecutor.iml" filepath="$PROJECT_DIR$/MyExecutor/MyExecutor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MyManager/MyManager.iml" filepath="$PROJECT_DIR$/MyManager/MyManager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MyReader/MyReader.iml" filepath="$PROJECT_DIR$/MyReader/MyReader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MyWriter/MyWriter.iml" filepath="$PROJECT_DIR$/MyWriter/MyWriter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Saskov_Lab2_Pipeline.iml" filepath="$PROJECT_DIR$/Saskov_Lab2_Pipeline.iml" />
+    </modules>
+  </component>
+</project>
