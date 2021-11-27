@@ -1,5 +1,5 @@
-input_file=test_files/CodedTest.bin
-output_file=test_files/DecMe.jpg
+input_file=test_files/Test.txt
+output_file=test_files/CodedTest.bin
 reader_config_file=configs/reader_config.txt
 writer_config_file=configs/writer_config.txt
 executor_config_file=configs/executor_config.txt

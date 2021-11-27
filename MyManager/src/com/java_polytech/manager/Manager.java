@@ -84,15 +84,20 @@ public class Manager {
     }
 
     private RC closeStreams() {
+        boolean isClosed = true;
         try {
             inputStream.close();
         } catch (IOException ex) {
-            return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "Error during closing input stream");
+            isClosed = false;
         }
         try {
             outputStream.close();
         } catch (IOException ex) {
-            return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "Error during closing output stream");
+            isClosed = false;
+        }
+
+        if (!isClosed) {
+            return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "Error during closing stream");
         }
         return RC.RC_SUCCESS;
     }
