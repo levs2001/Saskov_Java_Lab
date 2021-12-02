@@ -3,8 +3,16 @@ package com.java_polytech.executor;
 import com.java_polytech.pipeline_interfaces.IConsumer;
 import com.java_polytech.pipeline_interfaces.IExecutor;
 import com.java_polytech.pipeline_interfaces.RC;
+import com.java_polytech.universal_config.Grammar;
+import com.java_polytech.universal_config.ISyntaxAnalyzer;
+import com.java_polytech.universal_config.SyntaxAnalyzer;
 
 public class Executor implements IExecutor {
+    private static final String MODE_STRING = "mode";
+    private static final String BUFFER_SIZE_STRING = "buffer_size";
+    private static final String CODING_MODE_STRING = "coding";
+    private static final String DECODING_MODE_STRING = "decoding";
+
     private static final int MAX_BUFFER_SIZE = 1000000;
 
     private ArithmeticCodingProcessor codingProcessor;
@@ -13,25 +21,33 @@ public class Executor implements IExecutor {
 
     @Override
     public RC setConfig(String s) {
-        Config config = new Config();
+        ISyntaxAnalyzer config = new SyntaxAnalyzer(RC.RCWho.EXECUTOR,
+                new Grammar(MODE_STRING, BUFFER_SIZE_STRING));
         RC rc = config.readConfig(s);
         if (!rc.isSuccess()) {
             return rc;
         }
 
-        Config.WorkType wType = config.getWorkType();
-        int bufferSize = config.getBufferSize();
+        int bufferSize;
+        try {
+            bufferSize = Integer.parseInt(config.getParam(BUFFER_SIZE_STRING));
+        } catch (NumberFormatException e) {
+            return RC.RC_EXECUTOR_CONFIG_SEMANTIC_ERROR;
+        }
+
         if (bufferSize <= 0 || bufferSize > MAX_BUFFER_SIZE) {
             return RC.RC_EXECUTOR_CONFIG_SEMANTIC_ERROR;
         }
 
-        switch (wType) {
-            case CODING:
+        switch (config.getParam(MODE_STRING)) {
+            case CODING_MODE_STRING:
                 codingProcessor = new ArithmeticCoder(new CodingProcessorBuffer(bufferSize, consumer::consume));
                 break;
-            case DECODING:
+            case DECODING_MODE_STRING:
                 codingProcessor = new ArithmeticDecoder(new CodingProcessorBuffer(bufferSize, consumer::consume));
                 break;
+            default:
+                return RC.RC_EXECUTOR_CONFIG_SEMANTIC_ERROR;
         }
 
         return RC.RC_SUCCESS;

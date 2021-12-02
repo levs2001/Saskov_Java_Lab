@@ -1,14 +1,26 @@
 package com.java_polytech.manager;
 
 import com.java_polytech.pipeline_interfaces.*;
+import com.java_polytech.universal_config.Grammar;
+import com.java_polytech.universal_config.ISyntaxAnalyzer;
+import com.java_polytech.universal_config.SyntaxAnalyzer;
 
 import java.io.*;
 
 public class Manager {
-    private Config config;
+    private static final String INPUT_FILE_STRING = "input_file";
+    private static final String OUTPUT_FILE_STRING = "output_file";
+    private static final String READER_CONFIG_FILE_STRING = "reader_config_file";
+    private static final String WRITER_CONFIG_FILE_STRING = "writer_config_file";
+    private static final String EXECUTOR_CONFIG_FILE_STRING = "executor_config_file";
+    private static final String READER_CLASS_STRING = "reader_class";
+    private static final String WRITER_CLASS_STRING = "writer_class";
+    private static final String EXECUTOR_CLASS_STRING = "executor_class";
 
-    InputStream inputStream;
-    OutputStream outputStream;
+    private ISyntaxAnalyzer config;
+
+    private InputStream inputStream;
+    private OutputStream outputStream;
 
     private IReader reader;
     private IWriter writer;
@@ -34,7 +46,10 @@ public class Manager {
     }
 
     private RC setConfig(String s) {
-        config = new Config();
+        config = new SyntaxAnalyzer(RC.RCWho.MANAGER,
+                new Grammar(INPUT_FILE_STRING, OUTPUT_FILE_STRING, READER_CONFIG_FILE_STRING, WRITER_CONFIG_FILE_STRING,
+                        EXECUTOR_CONFIG_FILE_STRING, READER_CLASS_STRING, WRITER_CLASS_STRING, EXECUTOR_CLASS_STRING
+                ));
         return config.readConfig(s);
     }
 
@@ -52,13 +67,13 @@ public class Manager {
         if (!(rc = executor.setConsumer(writer)).isSuccess()) {
             return rc;
         }
-        if (!(rc = reader.setConfig(config.getReaderConfigFilename())).isSuccess()) {
+        if (!(rc = reader.setConfig(config.getParam(READER_CONFIG_FILE_STRING))).isSuccess()) {
             return rc;
         }
-        if (!(rc = executor.setConfig(config.getExecutorConfigFilename())).isSuccess()) {
+        if (!(rc = executor.setConfig(config.getParam(EXECUTOR_CONFIG_FILE_STRING))).isSuccess()) {
             return rc;
         }
-        if (!(rc = writer.setConfig(config.getWriterConfigFilename())).isSuccess()) {
+        if (!(rc = writer.setConfig(config.getParam(WRITER_CONFIG_FILE_STRING))).isSuccess()) {
             return rc;
         }
         if (!(rc = reader.setInputStream(inputStream)).isSuccess()) {
@@ -70,12 +85,12 @@ public class Manager {
 
     private RC openStreams() {
         try {
-            inputStream = new FileInputStream(config.getInputFilename());
+            inputStream = new FileInputStream(config.getParam(INPUT_FILE_STRING));
         } catch (FileNotFoundException ex) {
             return RC.RC_MANAGER_INVALID_INPUT_FILE;
         }
         try {
-            outputStream = new FileOutputStream(config.getOutputFilename());
+            outputStream = new FileOutputStream(config.getParam(OUTPUT_FILE_STRING));
         } catch (IOException ex) {
             return RC.RC_MANAGER_INVALID_OUTPUT_FILE;
         }
@@ -103,17 +118,17 @@ public class Manager {
     }
 
     private RC setParticipants() {
-        reader = (IReader) getInstance(config.getReaderClassName(), IReader.class);
+        reader = (IReader) getInstance(config.getParam(READER_CLASS_STRING), IReader.class);
         if (reader == null) {
             return RC.RC_MANAGER_INVALID_READER_CLASS;
         }
 
-        writer = (IWriter) getInstance(config.getWriterClassName(), IWriter.class);
+        writer = (IWriter) getInstance(config.getParam(WRITER_CLASS_STRING), IWriter.class);
         if (writer == null) {
             return RC.RC_MANAGER_INVALID_WRITER_CLASS;
         }
 
-        executor = (IExecutor) getInstance(config.getExecutorClassName(), IExecutor.class);
+        executor = (IExecutor) getInstance(config.getParam(EXECUTOR_CLASS_STRING), IExecutor.class);
         if (executor == null) {
             return RC.RC_MANAGER_INVALID_EXECUTOR_CLASS;
         }

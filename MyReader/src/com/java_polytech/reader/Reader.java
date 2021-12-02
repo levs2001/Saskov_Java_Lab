@@ -3,11 +3,15 @@ package com.java_polytech.reader;
 import com.java_polytech.pipeline_interfaces.IConsumer;
 import com.java_polytech.pipeline_interfaces.IReader;
 import com.java_polytech.pipeline_interfaces.RC;
+import com.java_polytech.universal_config.Grammar;
+import com.java_polytech.universal_config.ISyntaxAnalyzer;
+import com.java_polytech.universal_config.SyntaxAnalyzer;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class Reader implements IReader {
+    private static final String BUFFER_SIZE_STRING = "buffer_size";
     private static final int MAX_BUFFER_SIZE = 1000000;
 
     private InputStream inputStream;
@@ -52,13 +56,18 @@ public class Reader implements IReader {
 
     @Override
     public RC setConfig(String s) {
-        Config config = new Config();
+        ISyntaxAnalyzer config = new SyntaxAnalyzer(RC.RCWho.READER, new Grammar(BUFFER_SIZE_STRING));
         RC rc = config.readConfig(s);
         if (!rc.isSuccess()) {
             return rc;
         }
 
-        bufferSize = config.getBufferSize();
+        try {
+            bufferSize = Integer.parseInt(config.getParam(BUFFER_SIZE_STRING));
+        } catch (NumberFormatException e) {
+            return RC.RC_READER_CONFIG_SEMANTIC_ERROR;
+        }
+
         if (bufferSize <= 0 || bufferSize > MAX_BUFFER_SIZE) {
             return RC.RC_READER_CONFIG_SEMANTIC_ERROR;
         }

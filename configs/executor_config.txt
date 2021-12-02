@@ -1,2 +1,2 @@
-mode=coding
+mode=decoding
 buffer_size=100

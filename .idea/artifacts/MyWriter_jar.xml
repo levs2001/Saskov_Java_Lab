@@ -4,6 +4,7 @@
     <root id="archive" name="MyWriter.jar">
       <element id="module-output" name="MyWriter" />
       <element id="extracted-dir" path="$PROJECT_DIR$/libs/PipelineInterfaces.jar" path-in-jar="/" />
+      <element id="artifact" artifact-name="UniversalConfig:jar" />
     </root>
   </artifact>
 </component>
