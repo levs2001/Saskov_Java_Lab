@@ -12,10 +12,12 @@ public class Manager {
     private static final String OUTPUT_FILE_STRING = "output_file";
     private static final String READER_CONFIG_FILE_STRING = "reader_config_file";
     private static final String WRITER_CONFIG_FILE_STRING = "writer_config_file";
-    private static final String EXECUTOR_CONFIG_FILE_STRING = "executor_config_file";
+    private static final String EXECUTOR_CONFIG_FILE_LIST_STRING = "executor_config_file_list";
     private static final String READER_CLASS_STRING = "reader_class";
     private static final String WRITER_CLASS_STRING = "writer_class";
-    private static final String EXECUTOR_CLASS_STRING = "executor_class";
+    private static final String EXECUTOR_CLASS_LIST_STRING = "executor_class_list";
+
+    private static final String SPLITTER_FOR_EXECUTORS = ",";
 
     private ISyntaxAnalyzer config;
 
@@ -24,7 +26,7 @@ public class Manager {
 
     private IReader reader;
     private IWriter writer;
-    private IExecutor executor;
+    private IExecutor[] executors;
 
     public RC run(String configFilename) {
         RC rc = setConfig(configFilename);
@@ -48,7 +50,7 @@ public class Manager {
     private RC setConfig(String s) {
         config = new SyntaxAnalyzer(RC.RCWho.MANAGER,
                 new Grammar(INPUT_FILE_STRING, OUTPUT_FILE_STRING, READER_CONFIG_FILE_STRING, WRITER_CONFIG_FILE_STRING,
-                        EXECUTOR_CONFIG_FILE_STRING, READER_CLASS_STRING, WRITER_CLASS_STRING, EXECUTOR_CLASS_STRING
+                        EXECUTOR_CONFIG_FILE_LIST_STRING, READER_CLASS_STRING, WRITER_CLASS_STRING, EXECUTOR_CLASS_LIST_STRING
                 ));
         return config.readConfig(s);
     }
@@ -61,16 +63,22 @@ public class Manager {
         if (!(rc = setParticipants()).isSuccess()) {
             return rc;
         }
-        if (!(rc = reader.setConsumer(executor)).isSuccess()) {
+        if (!(rc = reader.setConsumer(executors[0])).isSuccess()) {
             return rc;
         }
-        if (!(rc = executor.setConsumer(writer)).isSuccess()) {
+        for (int i = 0; i < executors.length - 1; i++) {
+            //Каждому предудущему executor-у делаем consumer-ом следующий executor
+            if (!(rc = executors[i].setConsumer(executors[i + 1])).isSuccess()) {
+                return rc;
+            }
+        }
+        if (!(rc = executors[executors.length - 1].setConsumer(writer)).isSuccess()) {
             return rc;
         }
         if (!(rc = reader.setConfig(config.getParam(READER_CONFIG_FILE_STRING))).isSuccess()) {
             return rc;
         }
-        if (!(rc = executor.setConfig(config.getParam(EXECUTOR_CONFIG_FILE_STRING))).isSuccess()) {
+        if (!(rc = setExecutorsConfigs()).isSuccess()) {
             return rc;
         }
         if (!(rc = writer.setConfig(config.getParam(WRITER_CONFIG_FILE_STRING))).isSuccess()) {
@@ -128,12 +136,57 @@ public class Manager {
             return RC.RC_MANAGER_INVALID_WRITER_CLASS;
         }
 
-        executor = (IExecutor) getInstance(config.getParam(EXECUTOR_CLASS_STRING), IExecutor.class);
-        if (executor == null) {
+        executors = getExecutors(config.getParam(EXECUTOR_CLASS_LIST_STRING));
+        if (executors == null) {
             return RC.RC_MANAGER_INVALID_EXECUTOR_CLASS;
         }
 
         return RC.RC_SUCCESS;
+    }
+
+    /**
+     * Creates list of all executors from execList that will be used in pipeline
+     *
+     * @param execList - string with all executors, splitted by ","
+     * @return list of executors if instance of them all was successful
+     * null otherwise
+     */
+    private IExecutor[] getExecutors(String execList) {
+        execList = execList.replaceAll(" ", "");
+        String[] executorNames = execList.split(SPLITTER_FOR_EXECUTORS);
+        IExecutor[] executors = new IExecutor[executorNames.length];
+        for (int i = 0; i < executors.length; i++) {
+            executors[i] = (IExecutor) getInstance(executorNames[i], IExecutor.class);
+            if (executors[i] == null) {
+                return null;
+            }
+        }
+
+        return executors;
+    }
+
+    /**
+     * sets all executor configs from config(ISyntaxAnalyzer) to executors
+     *
+     * @return RC.RC_SUCCESS if all configs was sat ok
+     * RC with error otherwise
+     */
+    private RC setExecutorsConfigs() {
+        String execConfigsList = config.getParam(EXECUTOR_CONFIG_FILE_LIST_STRING).replaceAll(" ", "");
+        String[] execConfigs = execConfigsList.split(SPLITTER_FOR_EXECUTORS);
+        if (execConfigs.length != executors.length) {
+            return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "The count of configs for executors not equal to count of classes");
+        }
+
+        RC rc = RC.RC_SUCCESS;
+        for (int i = 0; i < execConfigs.length; i++) {
+            rc = executors[i].setConfig(execConfigs[i]);
+            if (!rc.isSuccess()) {
+                return rc;
+            }
+        }
+
+        return rc;
     }
 
     private Object getInstance(String className, Class<?> inter) {
