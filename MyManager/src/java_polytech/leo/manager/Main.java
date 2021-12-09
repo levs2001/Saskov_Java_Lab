@@ -1,4 +1,4 @@
-package com.java_polytech.manager;
+package java_polytech.leo.manager;
 
 import com.java_polytech.pipeline_interfaces.RC;
 

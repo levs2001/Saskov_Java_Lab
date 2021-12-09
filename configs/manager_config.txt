@@ -1,8 +1,8 @@
-input_file=test_files/MeTest.jpg
-output_file=test_files/MeFromPipe.jpg
+input_file=test_files/Test.txt
+output_file=test_files/TestFromPipe.txt
 reader_config_file=configs/reader_config.txt
 writer_config_file=configs/writer_config.txt
 executor_config_file_list=configs/executor_coding_config.txt, configs/executor_decoding_config.txt
-reader_class=com.java_polytech.reader.Reader
-writer_class=com.java_polytech.writer.Writer
-executor_class_list=com.java_polytech.executor.Executor, com.java_polytech.executor.Executor
+reader_class=java_polytech.leo.reader.Reader
+writer_class=java_polytech.leo.writer.Writer
+executor_class_list=java_polytech.leo.executor.Executor, java_polytech.leo.executor.Executor

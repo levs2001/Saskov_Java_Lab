@@ -1,4 +1,4 @@
-package com.java_polytech.universal_config;
+package java_polytech.leo.universal_config;
 
 public interface IGrammar {
     int getSize();

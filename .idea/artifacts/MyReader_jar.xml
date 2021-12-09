@@ -3,8 +3,8 @@
     <output-path>$PROJECT_DIR$/artifacts</output-path>
     <root id="archive" name="MyReader.jar">
       <element id="module-output" name="MyReader" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/libs/PipelineInterfaces.jar" path-in-jar="/" />
       <element id="artifact" artifact-name="UniversalConfig:jar" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/Pipeline2Interfaces.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

@@ -1,23 +1,26 @@
-package com.java_polytech.executor;
+package java_polytech.leo.executor;
 
 import com.java_polytech.pipeline_interfaces.RC;
 
 import java.util.Arrays;
-import java.util.function.Function;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class CodingProcessorBuffer {
     private static final int BITS_IN_BYTE_COUNT = 8;
     private static final int SHIFT = 1;
 
-    private final Function<byte[], RC> out;
+    private final Supplier<RC> getConsumerRC;
+    private final Consumer<byte[]> setOutputData;
     private final byte[] buffer;
     private int filled;
     private int bufferByte;
     private int bufferByteFreeBits = BITS_IN_BYTE_COUNT;
 
-    CodingProcessorBuffer(int bufferSize, Function<byte[], RC> out) {
+    CodingProcessorBuffer(int bufferSize, Consumer<byte[]> setOutputData, Supplier<RC> getConsumerRC) {
         buffer = new byte[bufferSize];
-        this.out = out;
+        this.getConsumerRC = getConsumerRC;
+        this.setOutputData = setOutputData;
     }
 
     public RC writeBit(int bit) {
@@ -63,9 +66,10 @@ public class CodingProcessorBuffer {
         if (filled < buffer.length) {
             res = Arrays.copyOf(buffer, filled);
         }
+        setOutputData.accept(res);
         filled = 0;
 
-        return out.apply(res);
+        return getConsumerRC.get();
     }
 
 

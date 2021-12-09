@@ -1,4 +1,4 @@
-package com.java_polytech.universal_config;
+package java_polytech.leo.universal_config;
 
 import java.util.Arrays;
 import java.util.List;

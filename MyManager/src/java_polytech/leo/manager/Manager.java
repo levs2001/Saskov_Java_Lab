@@ -1,9 +1,9 @@
-package com.java_polytech.manager;
+package java_polytech.leo.manager;
 
 import com.java_polytech.pipeline_interfaces.*;
-import com.java_polytech.universal_config.Grammar;
-import com.java_polytech.universal_config.ISyntaxAnalyzer;
-import com.java_polytech.universal_config.SyntaxAnalyzer;
+import java_polytech.leo.universal_config.Grammar;
+import java_polytech.leo.universal_config.ISyntaxAnalyzer;
+import java_polytech.leo.universal_config.SyntaxAnalyzer;
 
 import java.io.*;
 
@@ -18,6 +18,8 @@ public class Manager {
     private static final String EXECUTOR_CLASS_LIST_STRING = "executor_class_list";
 
     private static final String SPLITTER_FOR_EXECUTORS = ",";
+    private static final String SPACE = " ";
+    private static final String EMPTY_STRING = "";
 
     private ISyntaxAnalyzer config;
 
@@ -152,7 +154,7 @@ public class Manager {
      * null otherwise
      */
     private IExecutor[] getExecutors(String execList) {
-        execList = execList.replaceAll(" ", "");
+        execList = execList.replaceAll(SPACE, EMPTY_STRING);
         String[] executorNames = execList.split(SPLITTER_FOR_EXECUTORS);
         IExecutor[] executors = new IExecutor[executorNames.length];
         for (int i = 0; i < executors.length; i++) {
@@ -172,7 +174,7 @@ public class Manager {
      * RC with error otherwise
      */
     private RC setExecutorsConfigs() {
-        String execConfigsList = config.getParam(EXECUTOR_CONFIG_FILE_LIST_STRING).replaceAll(" ", "");
+        String execConfigsList = config.getParam(EXECUTOR_CONFIG_FILE_LIST_STRING).replaceAll(SPACE, EMPTY_STRING);
         String[] execConfigs = execConfigsList.split(SPLITTER_FOR_EXECUTORS);
         if (execConfigs.length != executors.length) {
             return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "The count of configs for executors not equal to count of classes");
