@@ -6,6 +6,8 @@ import java_polytech.leo.universal_config.ISyntaxAnalyzer;
 import java_polytech.leo.universal_config.SyntaxAnalyzer;
 
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Manager {
     private static final String INPUT_FILE_STRING = "input_file";
@@ -21,6 +23,7 @@ public class Manager {
     private static final String SPACE = " ";
     private static final String EMPTY_STRING = "";
 
+    private final Logger logger;
     private ISyntaxAnalyzer config;
 
     private InputStream inputStream;
@@ -29,6 +32,10 @@ public class Manager {
     private IReader reader;
     private IWriter writer;
     private IExecutor[] executors;
+
+    public Manager(Logger logger) {
+        this.logger = logger;
+    }
 
     public RC run(String configFilename) {
         RC rc = setConfig(configFilename);
@@ -41,6 +48,12 @@ public class Manager {
             return rc;
         }
 
+        StringBuilder finMsgBuilder = new StringBuilder("Pipeline was successfully built, order of Executors: \n");
+        for (IExecutor executor : executors) {
+            finMsgBuilder.append(executor).append("\n");
+        }
+        logger.log(Level.INFO, finMsgBuilder.toString());
+
         rc = reader.run();
         if (!rc.isSuccess()) {
             return rc;
@@ -50,6 +63,7 @@ public class Manager {
     }
 
     private RC setConfig(String s) {
+        logger.log(Level.INFO, "Setting config...");
         config = new SyntaxAnalyzer(RC.RCWho.MANAGER,
                 new Grammar(INPUT_FILE_STRING, OUTPUT_FILE_STRING, READER_CONFIG_FILE_STRING, WRITER_CONFIG_FILE_STRING,
                         EXECUTOR_CONFIG_FILE_LIST_STRING, READER_CLASS_STRING, WRITER_CLASS_STRING, EXECUTOR_CLASS_LIST_STRING
@@ -58,6 +72,7 @@ public class Manager {
     }
 
     private RC buildPipeline() {
+        logger.log(Level.INFO, "Building pipeline...");
         RC rc;
         if (!(rc = openStreams()).isSuccess()) {
             return rc;
@@ -94,6 +109,7 @@ public class Manager {
     }
 
     private RC openStreams() {
+        logger.log(Level.INFO, "Opening streams...");
         try {
             inputStream = new FileInputStream(config.getParam(INPUT_FILE_STRING));
         } catch (FileNotFoundException ex) {
@@ -109,6 +125,7 @@ public class Manager {
     }
 
     private RC closeStreams() {
+        logger.log(Level.INFO, "Closing streams...");
         boolean isClosed = true;
         try {
             inputStream.close();
@@ -128,6 +145,7 @@ public class Manager {
     }
 
     private RC setParticipants() {
+        logger.log(Level.INFO, "Setting participants of pipeline...");
         reader = (IReader) getInstance(config.getParam(READER_CLASS_STRING), IReader.class);
         if (reader == null) {
             return RC.RC_MANAGER_INVALID_READER_CLASS;

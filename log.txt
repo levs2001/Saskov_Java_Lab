@@ -1,0 +1,19 @@
+дек 11, 2021 7:16:54 PM java_polytech.leo.manager.Manager setConfig
+INFO: Setting config...
+дек 11, 2021 7:16:54 PM java_polytech.leo.manager.Manager buildPipeline
+INFO: Building pipeline...
+дек 11, 2021 7:16:54 PM java_polytech.leo.manager.Manager openStreams
+INFO: Opening streams...
+дек 11, 2021 7:16:54 PM java_polytech.leo.manager.Manager setParticipants
+INFO: Setting participants of pipeline...
+дек 11, 2021 7:16:54 PM java_polytech.leo.manager.Manager run
+INFO: Pipeline was successfully built, order of Executors: 
+java_polytech.leo.executor.Executor@6433a2
+java_polytech.leo.executor.Executor@5910e440
+com.executor.Executor@6267c3bb
+com.executor.Executor@533ddba
+
+дек 11, 2021 7:16:59 PM java_polytech.leo.manager.Manager closeStreams
+INFO: Closing streams...
+дек 11, 2021 7:16:59 PM java_polytech.leo.manager.Main main
+INFO: No errors have occurred.

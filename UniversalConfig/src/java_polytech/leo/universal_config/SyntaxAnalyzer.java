@@ -11,7 +11,10 @@ import java.util.Map;
 public class SyntaxAnalyzer implements ISyntaxAnalyzer {
     private static final int PARAM_NAME_IND = 0;
     private static final int PARAM_IND = 1;
+    private static final String COMMENTS_REGULAR = "#.*";
+    private static final String SPACES_REGULAR = "\\s+";
     private static final String SPLITTER_STRING = "=";
+    private static final String EMPTY_STRING = "";
 
     private final RC.RCWho who;
     private final IGrammar grammar;
@@ -26,8 +29,15 @@ public class SyntaxAnalyzer implements ISyntaxAnalyzer {
     public RC readConfig(String filename) {
         RC rc = RC.RC_SUCCESS;
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            for (int i = 0; i < grammar.getSize(); i++) {
-                rc = setParam(reader.readLine());
+            String readLine;
+            while ((readLine = reader.readLine()) != null) {
+                readLine = readLine.replaceAll(COMMENTS_REGULAR, EMPTY_STRING)
+                        .replaceAll(SPACES_REGULAR, EMPTY_STRING);
+
+                if (!readLine.isEmpty()) {
+                    rc = setParam(readLine);
+                }
+
                 if (!rc.isSuccess()) {
                     return rc;
                 }
