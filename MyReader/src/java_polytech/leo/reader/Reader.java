@@ -10,20 +10,25 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class Reader implements IReader {
     private static final String BUFFER_SIZE_STRING = "buffer_size";
     private static final int MAX_BUFFER_SIZE = 1000000;
     private static final int SIZE_OF_CHAR = 2;
     private static final int SIZE_OF_INT = 4;
-
+    private static final int READER_PROVIDER_NUM = 0;
 
     private final TYPE[] supportedTypes = {TYPE.BYTE_ARRAY, TYPE.CHAR_ARRAY, TYPE.INT_ARRAY};
     private TYPE pickedType;
     private InputStream inputStream;
-    private byte[] readData;
     private int bufferSize;
-    private IConsumer consumer;
+    private final List<IConsumer> consumers = new ArrayList<>();
+
+    //Прочитанные пакеты
+    private final Map<Long, byte[]> packetsRead = Collections.synchronizedMap(new HashMap<>());
+    private long packetNum = 0;
+    private volatile RC currentStatus = RC.RC_SUCCESS;
 
     @Override
     public RC setInputStream(InputStream inputStream) {
@@ -36,34 +41,56 @@ public class Reader implements IReader {
     }
 
     @Override
-    public RC run() {
+    public void run() {
         byte[] buffer = new byte[bufferSize];
         int readCount;
         try {
             while ((readCount = inputStream.read(buffer)) > 0) {
-                if (readCount == bufferSize) {
-                    readData = buffer;
+                byte[] readDataForMap = new byte[readCount];
+                System.arraycopy(buffer, 0, readDataForMap, 0, readCount);
+
+                if ((pickedType.equals(TYPE.INT_ARRAY) && readDataForMap.length % SIZE_OF_INT != 0)
+                        || (pickedType.equals(TYPE.CHAR_ARRAY) && readDataForMap.length % SIZE_OF_CHAR != 0)) {
+                    currentStatus = new RC(RC.RCWho.READER, RC.RCType.CODE_CUSTOM_ERROR, "Read portion of bytes can't be converted to chosen type");
+                    for (IConsumer consumer : consumers) {
+                        consumer.consume(IConsumer.END_OF_MESSAGES, READER_PROVIDER_NUM);
+                    }
+                    return;
+                }
+
+                packetsRead.put(packetNum, readDataForMap);
+                //Отдавать надо конкретному консюмеру по очереди
+                RC rc = consumers.get((int) (packetNum % consumers.size())).consume(packetNum, READER_PROVIDER_NUM);
+
+                if (packetNum < IConsumer.MAX_PACKET_NUM) {
+                    packetNum++;
                 } else {
-                    readData = new byte[readCount];
-                    System.arraycopy(buffer, 0, readData, 0, readCount);
+                    // Защита от переполнения. Нужно учесть что Writer обнуляет текущий номер пакета точно так же
+                    packetNum = 0;
                 }
 
-                if ((pickedType.equals(TYPE.INT_ARRAY) && readData.length % SIZE_OF_INT != 0)
-                        || (pickedType.equals(TYPE.CHAR_ARRAY) && readData.length % SIZE_OF_CHAR != 0)) {
-                    return new RC(RC.RCWho.READER, RC.RCType.CODE_CUSTOM_ERROR, "Read portion of bytes can't be converted to chosen type");
-                }
-
-                RC rc = consumer.consume();
                 if (!rc.isSuccess()) {
-                    return rc;
+                    currentStatus = rc;
+                    for (IConsumer consumer : consumers) {
+                        consumer.consume(IConsumer.END_OF_MESSAGES, READER_PROVIDER_NUM);
+                    }
+                    return;
                 }
             }
         } catch (IOException e) {
-            return RC.RC_READER_FAILED_TO_READ;
+            currentStatus = RC.RC_READER_FAILED_TO_READ;
+            for (IConsumer consumer : consumers) {
+                consumer.consume(IConsumer.END_OF_MESSAGES, READER_PROVIDER_NUM);
+            }
+            return;
         }
 
-        readData = null;
-        return consumer.consume();
+        for (IConsumer consumer : consumers) {
+            RC consRC = consumer.consume(IConsumer.END_OF_MESSAGES, READER_PROVIDER_NUM);
+            if (!consRC.isSuccess()) {
+                currentStatus = consRC;
+            }
+        }
     }
 
     @Override
@@ -93,8 +120,8 @@ public class Reader implements IReader {
 
     @Override
     public RC setConsumer(IConsumer consumer) {
-        this.consumer = consumer;
-        return consumer.setProvider(this);
+        this.consumers.add(consumer);
+        return consumer.setProvider(this).getKey();
     }
 
     @Override
@@ -118,16 +145,18 @@ public class Reader implements IReader {
         return null;
     }
 
+    @Override
+    public RC getStatus() {
+        return currentStatus;
+    }
+
     private class ByteMediator implements IMediator {
 
         @Override
-        public Object getData() {
-            if (readData == null) {
-                return null;
-            }
-
-            byte[] outputData = new byte[readData.length];
-            System.arraycopy(readData, 0, outputData, 0, readData.length);
+        public Object getData(long packetNum) {
+            byte[] packet = packetsRead.remove(packetNum);
+            byte[] outputData = new byte[packet.length];
+            System.arraycopy(packet, 0, outputData, 0, packet.length);
             return outputData;
         }
     }
@@ -135,12 +164,9 @@ public class Reader implements IReader {
     private class IntMediator implements IMediator {
 
         @Override
-        public Object getData() {
-            if (readData == null) {
-                return null;
-            }
-
-            IntBuffer intBuffer = ByteBuffer.wrap(readData).asIntBuffer();
+        public Object getData(long packetNum) {
+            byte[] packet = packetsRead.remove(packetNum);
+            IntBuffer intBuffer = ByteBuffer.wrap(packet).asIntBuffer();
             int[] outputData = new int[intBuffer.remaining()];
             intBuffer.get(outputData);
             return outputData;
@@ -150,12 +176,8 @@ public class Reader implements IReader {
     private class CharMediator implements IMediator {
 
         @Override
-        public Object getData() {
-            if (readData == null) {
-                return null;
-            }
-
-            return new String(readData, StandardCharsets.UTF_8).toCharArray();
+        public Object getData(long packetNum) {
+            return new String(packetsRead.remove(packetNum), StandardCharsets.UTF_8).toCharArray();
         }
     }
 

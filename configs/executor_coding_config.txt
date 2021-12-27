@@ -1,3 +1,0 @@
-# Executor coding config
-mode = coding       # Задаем мод для экзекютора
-buffer_size = 100   # Размер буффера

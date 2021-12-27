@@ -4,7 +4,7 @@
     <root id="archive" name="MyReader.jar">
       <element id="module-output" name="MyReader" />
       <element id="artifact" artifact-name="UniversalConfig:jar" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/libs/Pipeline2Interfaces.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/artifacts/Pipeline2Interfaces-main.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

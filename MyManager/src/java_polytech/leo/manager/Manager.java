@@ -1,6 +1,9 @@
 package java_polytech.leo.manager;
 
-import com.java_polytech.pipeline_interfaces.*;
+import com.java_polytech.pipeline_interfaces.IExecutor;
+import com.java_polytech.pipeline_interfaces.IReader;
+import com.java_polytech.pipeline_interfaces.IWriter;
+import com.java_polytech.pipeline_interfaces.RC;
 import java_polytech.leo.universal_config.Grammar;
 import java_polytech.leo.universal_config.ISyntaxAnalyzer;
 import java_polytech.leo.universal_config.SyntaxAnalyzer;
@@ -45,21 +48,61 @@ public class Manager {
 
         rc = buildPipeline();
         if (!rc.isSuccess()) {
+            closeStreams();
             return rc;
         }
 
-        StringBuilder finMsgBuilder = new StringBuilder("Pipeline was successfully built, order of Executors: \n");
+        StringBuilder finMsgBuilder = new StringBuilder("Pipeline was successfully built, Parallel executors: \n");
         for (IExecutor executor : executors) {
             finMsgBuilder.append(executor).append("\n");
         }
         logger.log(Level.INFO, finMsgBuilder.toString());
 
-        rc = reader.run();
+        //Создаем потоки
+        Thread readerThread = new Thread(reader);
+        Thread[] executorsThreads = new Thread[executors.length];
+        for (int i = 0; i < executors.length; i++) {
+            executorsThreads[i] = new Thread(executors[i]);
+        }
+        Thread writerThread = new Thread(writer);
+
+        //Запускаем потоки
+        readerThread.start();
+        for (Thread execThread : executorsThreads) {
+            execThread.start();
+        }
+        writerThread.start();
+
+        //Ждем их завершения
+        try {
+            readerThread.join();
+            for (Thread execThread : executorsThreads) {
+                execThread.join();
+            }
+            writerThread.join();
+        } catch (InterruptedException e) {
+            closeStreams();
+            return new RC(RC.RCWho.MANAGER, RC.RCType.CODE_CUSTOM_ERROR, "Thread problem: interruption");
+        }
+
+        rc = closeStreams();
         if (!rc.isSuccess()) {
             return rc;
         }
 
-        return closeStreams();
+        // Проверяем, что всё ок
+        rc = reader.getStatus();
+        if (!rc.isSuccess()) {
+            return rc;
+        }
+
+        for (IExecutor executor : executors) {
+            rc = executor.getStatus();
+            if (!rc.isSuccess()) {
+                return rc;
+            }
+        }
+        return writer.getStatus();
     }
 
     private RC setConfig(String s) {
@@ -80,18 +123,17 @@ public class Manager {
         if (!(rc = setParticipants()).isSuccess()) {
             return rc;
         }
-        if (!(rc = reader.setConsumer(executors[0])).isSuccess()) {
-            return rc;
-        }
-        for (int i = 0; i < executors.length - 1; i++) {
-            //Каждому предудущему executor-у делаем consumer-ом следующий executor
-            if (!(rc = executors[i].setConsumer(executors[i + 1])).isSuccess()) {
+
+        for (IExecutor executor : executors) {
+            if (!(rc = reader.setConsumer(executor)).isSuccess()) {
+                return rc;
+            }
+
+            if (!(rc = executor.setConsumer(writer)).isSuccess()) {
                 return rc;
             }
         }
-        if (!(rc = executors[executors.length - 1].setConsumer(writer)).isSuccess()) {
-            return rc;
-        }
+
         if (!(rc = reader.setConfig(config.getParam(READER_CONFIG_FILE_STRING))).isSuccess()) {
             return rc;
         }
@@ -222,4 +264,5 @@ public class Manager {
 
         return ans;
     }
+
 }

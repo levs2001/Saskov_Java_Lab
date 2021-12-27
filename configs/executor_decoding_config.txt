@@ -1,3 +1,0 @@
-# Executor decoding config
-mode = decoding     # Мод для экзекьютора
-buffer_size = 100   # Размер буффера

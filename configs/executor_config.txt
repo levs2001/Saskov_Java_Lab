@@ -1,0 +1,2 @@
+# Executor decoding config
+buffer_size = 52   # Размер буффера
